@@ -41,6 +41,7 @@
 .black-key.future{cursor:default;filter:saturate(.2);opacity:.55}
 .black-key.scale-key{border-color:var(--key-border);background:linear-gradient(110deg,var(--key-border),#13252d 68%);box-shadow:0 7px 8px #0009,0 0 18px var(--key-shadow),inset 0 -7px #0d171c}
 .black-key span{position:absolute;left:50%;bottom:9px;transform:translateX(-50%);padding:3px 5px;border:1px solid #ffffff88;border-radius:6px;font-family:Fredoka;font-size:11px;color:#102027;background:var(--key);white-space:nowrap}
+.black-key.future span{color:#d7e0e3;border-color:#7d8d94;background:#52636a;box-shadow:none}
 .black-key.pressed{transform:translateY(4px);box-shadow:0 2px 4px #0008,0 0 24px var(--key-shadow)}
 
 @media(max-width:650px){.staff{--staff-top:38px;--staff-half-step:13px;--staff-height:104px;--neutral-hidden-y:90px;height:205px}.staff-lines{top:38px;height:104px}.pitch-card{width:90%;height:36px}.mystery.pitch-card.neutral-hidden{width:92%;height:calc(var(--staff-height) + 32px)}.piano{height:178px;padding:6px 5px 10px}.black-keys{inset:6px 5px 10px}.white-key span{bottom:10px;min-width:29px;height:29px;padding:0 5px;font-size:13px}}
@@ -82,6 +83,11 @@
 .black-keys{pointer-events:none}
 .black-key{pointer-events:auto}
 .black-key.future,.white-key.future{pointer-events:none}
+
+/* Preserve accidental spelling while keeping the mode word decorative. */
+.exercise-key{text-transform:none}
+.exercise-key .key-root{text-transform:none}
+.exercise-key .key-mode{text-transform:none}
 
 /* Persistent app shell: keep practice controls reachable while the page scrolls. */
 header{position:sticky;top:0;z-index:8;margin-inline:-8px;padding:10px 8px;border-radius:0 0 18px 18px;background:linear-gradient(180deg,#102832f5 0%,#102832e8 76%,#10283200 100%);backdrop-filter:blur(12px)}

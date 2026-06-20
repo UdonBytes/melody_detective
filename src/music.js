@@ -89,13 +89,15 @@ export function getExerciseNotes(noteCount, mode = 'major', tonic = 'C', minorTy
 }
 
 export function getKeyboardPitches(noteCount, mode = 'major', tonic = 'C', minorType = 'harmonic') {
-  const activeNotes = getExerciseNotes(noteCount, mode, tonic, minorType)
-  let start = noteToMidi(activeNotes[0])
-  let end = noteToMidi(activeNotes.at(-1))
+  // The physical piano always spans the complete tonic-to-tonic octave.
+  // noteCount controls which keys are active, never the keyboard geometry.
+  const visibleNotes = getExerciseNotes(8, mode, tonic, minorType)
+  let start = noteToMidi(visibleNotes[0])
+  let end = noteToMidi(visibleNotes.at(-1))
   // A black tonic needs its neighboring white keys to preserve real piano
   // geometry; those visual support keys remain inactive.
-  if (/[#b]/.test(getDisplayNoteName(activeNotes[0]))) start -= 1
-  if (/[#b]/.test(getDisplayNoteName(activeNotes.at(-1)))) end += 1
+  if (/[#b]/.test(getDisplayNoteName(visibleNotes[0]))) start -= 1
+  if (/[#b]/.test(getDisplayNoteName(visibleNotes.at(-1)))) end += 1
   return Array.from({ length: end - start + 1 }, (_, index) => midiToPitch(start + index))
 }
 

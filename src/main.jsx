@@ -40,9 +40,10 @@ function Staff({ melody, hidden, completed, currentIndex, labels }) {
   </div>
 }
 
-function Piano({ onPress, flash, labels, disabled, activeNotes, keyboardPitches }) {
+function Piano({ onPress, flash, labels, disabled, activeNotes, visibleNotes, keyboardPitches }) {
   const activeByMidi = new Map(activeNotes.map(note => [noteToMidi(note), note]))
-  const accidentalLetters = new Set(activeNotes.map(getDisplayNoteName).filter(note => /[#b]/.test(note)).map(note => note[0]))
+  const visibleByMidi = new Map(visibleNotes.map(note => [noteToMidi(note), note]))
+  const accidentalLetters = new Set(visibleNotes.map(getDisplayNoteName).filter(note => /[#b]/.test(note)).map(note => note[0]))
   const whiteKeys = keyboardPitches.filter(note => !getDisplayNoteName(note).includes('#'))
   let whiteCount = 0
   const blackKeys = keyboardPitches.flatMap(note => {
@@ -60,10 +61,12 @@ function Piano({ onPress, flash, labels, disabled, activeNotes, keyboardPitches 
     })}</div>
     <div className="black-keys">{blackKeys.map(({ note, after }) => {
       const answerNote = activeByMidi.get(noteToMidi(note))
+      const visibleScaleNote = visibleByMidi.get(noteToMidi(note))
       const playable = Boolean(answerNote)
-      const displayName = getDisplayNoteName(answerNote || note)
+      const shouldShowLabel = Boolean(visibleScaleNote)
+      const displayName = getDisplayNoteName(answerNote || visibleScaleNote || note)
       const color = getNoteColor(answerNote || note)
-      return <button className={`black-key ${playable ? 'scale-key' : 'future'} ${flash === answerNote ? 'pressed' : ''}`} style={{ '--after': after, '--key': color.bg, '--key-border': color.border, '--key-shadow': color.shadow }} disabled={disabled || !playable} onClick={() => playable && onPress(answerNote)} key={note} aria-label={playable ? `Play ${displayName}` : `${displayName}, not in this scale`}>{playable && <span>{labels ? displayName : '♪'}</span>}</button>
+      return <button className={`black-key ${playable ? 'scale-key' : 'future'} ${flash === answerNote ? 'pressed' : ''}`} style={{ '--after': after, '--key': color.bg, '--key-border': color.border, '--key-shadow': color.shadow }} disabled={disabled || !playable} onClick={() => playable && onPress(answerNote)} key={note} aria-label={playable ? `Play ${displayName}` : `${displayName}, not in this scale`}>{shouldShowLabel && <span>{labels ? displayName : '♪'}</span>}</button>
     })}</div>
   </div>
 }
@@ -171,11 +174,11 @@ function App() {
   return <main>
     <header><div className="brand"><span>♪</span><div><strong>Melody Detective</strong><small>Listen · Remember · Play</small></div></div><div className="header-actions"><div className="stat"><span>★</span><div><small>Score</small><strong>{score}</strong></div></div><div className="stat streak"><span>🔥</span><div><small>Streak</small><strong>{streak}</strong></div></div><button className="settings-button" onClick={() => setSettings(true)} aria-label="Open settings">⚙</button></div></header>
     <section className="game-card">
-      <div className="game-head"><div><p className="eyebrow">{tonic} {keyMode === 'major' ? 'Major' : 'Minor'}</p><h1>Play the melody back</h1></div><button className="listen" onClick={() => play()} disabled={playing || !audioReady}><Sound />{!audioReady ? 'Loading piano…' : playing ? 'Playing…' : 'Play melody'}</button></div>
+      <div className="game-head"><div><p className="eyebrow exercise-key"><span className="key-root">{tonic}</span> <span className="key-mode">{keyMode === 'major' ? 'Major' : 'Minor'}</span></p><h1>Play the melody back</h1></div><button className="listen" onClick={() => play()} disabled={playing || !audioReady}><Sound />{!audioReady ? 'Loading piano…' : playing ? 'Playing…' : 'Play melody'}</button></div>
       <Staff melody={melody} hidden={hidden} completed={completed} currentIndex={currentIndex} labels={labels} />
       <div className={`feedback ${feedback[0]}`} role="status" aria-live="polite"><span>{feedback[0] === 'correct' ? '✓' : feedback[0] === 'wrong' ? '↻' : '♫'}</span>{feedback[1]}</div>
       <div className="keyboard-head"><div><p className="eyebrow">Your piano</p><h2>Play the highlighted note</h2></div><small>{complete ? 'Melody complete!' : `Note ${currentIndex + 1} of ${melody.length}`}</small></div>
-      <Piano onPress={answer} flash={flash} labels={labels} disabled={complete || advancing || !audioReady} activeNotes={getExerciseNotes(melodyLength, keyMode, tonic, exerciseMinorForm)} keyboardPitches={getKeyboardPitches(melodyLength, keyMode, tonic, exerciseMinorForm)} />
+      <Piano onPress={answer} flash={flash} labels={labels} disabled={complete || advancing || !audioReady} activeNotes={getExerciseNotes(melodyLength, keyMode, tonic, exerciseMinorForm)} visibleNotes={getExerciseNotes(8, keyMode, tonic, exerciseMinorForm)} keyboardPitches={getKeyboardPitches(melodyLength, keyMode, tonic, exerciseMinorForm)} />
       <div className="actions"><button className="secondary" onClick={() => play()} disabled={playing || !audioReady}><Sound />{audioReady ? 'Play again' : 'Loading…'}</button><button className="primary" onClick={() => next()} disabled={!complete || playing}>Next question <span>→</span></button></div>
     </section>
     <footer><button onClick={reset}>Reset progress</button><span>•</span><span>All notes play with the same gentle beat</span></footer>
