@@ -57,9 +57,9 @@
 .key.pressed{background:var(--key);box-shadow:0 1px 0 var(--key-border),0 0 22px var(--key-shadow)}
 
 /* Keep every supported tonic-to-tonic range visible, through C#6. */
-.staff{--staff-top:60px;--staff-half-step:10px;--staff-height:80px;--neutral-hidden-y:100px}
+.staff{--staff-half-step:13px;--staff-height:104px;--staff-top:calc((100% - var(--staff-height))/2);--neutral-hidden-y:50%}
 .staff-lines{top:var(--staff-top);height:var(--staff-height)}
-@media(max-width:650px){.staff{--staff-top:50px;--staff-half-step:8px;--staff-height:64px;--neutral-hidden-y:82px}.staff-lines{top:var(--staff-top);height:var(--staff-height)}}
+@media(max-width:650px){.staff{--staff-half-step:10px;--staff-height:80px;--staff-top:calc((100% - var(--staff-height))/2);--neutral-hidden-y:50%}.staff-lines{top:var(--staff-top);height:var(--staff-height)}}
 
 /* Length/range selection and compact eight-slot staff layout. */
 .settings{max-height:92vh;overflow:auto}.settings-group{min-width:0;margin:0 0 18px;padding:0;border:0}
@@ -83,6 +83,52 @@
 .black-keys{pointer-events:none}
 .black-key{pointer-events:auto}
 .black-key.future,.white-key.future{pointer-events:none}
+
+/* Keep inactive pitches visible while making their disabled state unmistakable. */
+.white-key.future{
+  pointer-events:auto;
+  cursor:not-allowed;
+  filter:grayscale(1);
+  opacity:.42;
+  border-color:#7a888e;
+  border-bottom-color:#66747a;
+  background:linear-gradient(#c9d0d2,#9da8ac);
+  box-shadow:inset 0 -9px 15px #47556926,0 4px 0 #56656c;
+  transform:none
+}
+.white-key.future span{
+  color:#46535a;
+  border-color:#75838a;
+  background:#8f9ba0;
+  box-shadow:none;
+  opacity:.72
+}
+.white-key.future:hover{
+  background:linear-gradient(#c9d0d2,#9da8ac);
+  transform:none
+}
+.black-key.future{
+  pointer-events:auto;
+  cursor:not-allowed;
+  filter:grayscale(1);
+  opacity:.38;
+  border-color:#3f4d53;
+  border-bottom-color:#111a1e;
+  background:linear-gradient(90deg,#26343a,#10191d 55%,#35434a);
+  box-shadow:0 5px 6px #0007,inset 0 -7px #172126;
+  transform:none
+}
+.black-key.future span{
+  color:#b7c0c4;
+  border-color:#66747a;
+  background:#46555b;
+  box-shadow:none;
+  opacity:.7
+}
+.black-key.future:hover{
+  background:linear-gradient(90deg,#26343a,#10191d 55%,#35434a);
+  transform:none
+}
 
 /* Preserve accidental spelling while keeping the mode word decorative. */
 .exercise-key{text-transform:none}
@@ -113,3 +159,69 @@ header{position:sticky;top:0;z-index:8;margin-inline:-8px;padding:10px 8px;borde
 .level-grid strong{font-size:15px;line-height:1.1}
 .level-grid span{margin-top:4px;font-size:11px;line-height:1.2}
 @media(max-width:520px){.level-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}}
+
+/* Viewport-fit practice shell: keep the complete exercise together on screen. */
+html,body,#root{height:100%;min-height:100%;overflow:hidden}
+body{min-height:100dvh}
+main{display:flex;flex-direction:column;width:min(1120px,calc(100% - 24px));height:100dvh;min-height:100dvh;padding:clamp(7px,1.5dvh,16px) 0 clamp(5px,1dvh,10px);overflow:hidden}
+header{position:relative;top:auto;flex:0 0 auto;margin-bottom:clamp(5px,1dvh,12px);padding:clamp(4px,.8dvh,8px);background:transparent;backdrop-filter:none}
+.brand>span{width:clamp(38px,5.5dvh,46px);height:clamp(38px,5.5dvh,46px)}
+.brand strong{font-size:clamp(17px,2.6dvh,21px)}
+.stat{padding-block:clamp(5px,1dvh,8px)}
+.settings-button{width:clamp(40px,5.5dvh,46px);height:clamp(40px,5.5dvh,46px)}
+.game-card{display:flex;flex:none;min-height:0;flex-direction:column;padding:clamp(10px,2dvh,20px) clamp(12px,2vw,24px);border-radius:clamp(20px,3dvh,28px);overflow:hidden}
+.game-head{flex:0 0 auto}
+h1{font-size:clamp(23px,4dvh,34px);line-height:1.05}
+h2{font-size:clamp(18px,2.7dvh,22px);line-height:1.1}
+.listen{padding:clamp(10px,1.5dvh,13px) 16px}
+.staff{flex:none;min-height:300px;max-height:300px;height:300px;margin:clamp(7px,1.2dvh,13px) 0 clamp(5px,.9dvh,10px);border-radius:clamp(16px,2.5dvh,22px)}
+.feedback{flex:0 0 auto;min-height:clamp(32px,5dvh,42px);margin:0 auto clamp(4px,.8dvh,9px)}
+.feedback>span{width:clamp(25px,3.8dvh,29px);height:clamp(25px,3.8dvh,29px)}
+.keyboard-head{flex:0 0 auto;margin-bottom:clamp(5px,.8dvh,9px)}
+.keyboard-head>small{padding:5px 9px}
+.keyboard-head.progress-only{justify-content:flex-end;margin-top:0;margin-bottom:clamp(3px,.6dvh,6px);min-height:0}
+.piano{flex:0 0 auto;height:clamp(140px,23dvh,185px);padding:clamp(5px,1dvh,8px) clamp(5px,1dvh,8px) clamp(8px,1.3dvh,12px)}
+.black-keys{inset:clamp(5px,1dvh,8px) clamp(5px,1dvh,8px) clamp(8px,1.3dvh,12px)}
+.actions{flex:0 0 auto;margin-top:clamp(5px,1dvh,11px)}
+.actions.single-action{display:flex;justify-content:flex-end;grid-template-columns:none}
+.actions.single-action .primary{min-width:clamp(180px,24vw,260px)}
+.secondary,.primary{min-height:clamp(42px,6dvh,48px)}
+footer{flex:0 0 auto;flex-direction:column;align-items:center;gap:2px;margin-top:auto;padding-top:clamp(3px,.8dvh,8px);line-height:1.15}
+.footer-tools{display:flex;justify-content:center;gap:9px}
+.footer-credit{font-size:clamp(.7rem,1.2vw,.85rem);font-weight:700;opacity:.7;text-align:center}
+
+@media(max-height:760px){
+  .brand small{font-size:9px}.header-actions{gap:6px}.stat{min-width:64px;padding-inline:8px}
+  .game-card{padding-block:10px}.eyebrow{margin-bottom:2px}
+  .staff{min-height:260px;height:260px;max-height:260px;--staff-half-step:11px;--staff-height:88px;--staff-top:calc((100% - var(--staff-height))/2);--neutral-hidden-y:50%}
+  .piano{height:clamp(132px,22dvh,165px)}
+  .white-key span{bottom:9px;height:28px;min-width:29px;font-size:13px}
+}
+
+@media(max-width:650px){
+  main{width:min(100% - 12px,540px);padding-block:5px 4px}
+  header{gap:6px;margin-bottom:4px;padding:3px 2px}.brand{gap:7px}.brand small{display:block;font-size:8px}.header-actions{gap:4px}.stat,.streak{display:flex;min-width:48px;padding:5px 6px}.stat>span{font-size:14px}.settings-button{width:38px;height:38px}
+  .game-card{padding:9px 9px 8px;border-radius:18px}.game-head h1{max-width:none}.listen{width:42px;height:42px}
+  .staff{min-height:250px;height:250px;max-height:250px;margin-block:6px 4px;--staff-half-step:10px;--staff-height:80px;--staff-top:calc((100% - var(--staff-height))/2);--neutral-hidden-y:50%}
+  .feedback{min-height:30px;margin-bottom:4px;font-size:13px}.feedback>span{width:25px;height:25px}
+  .keyboard-head{margin-bottom:5px}.keyboard-head>small{padding:4px 7px}
+  .piano{height:clamp(128px,22dvh,158px)}
+  .actions{margin-top:5px}.secondary,.primary{min-height:42px}.actions.single-action .primary{width:100%}
+  footer{margin-top:auto;padding-top:3px;font-size:10px}.footer-tools span{display:none}.footer-credit{display:block}
+}
+
+/* Short landscape screens use both halves of the viewport instead of clipping. */
+@media(max-height:700px) and (min-width:700px){
+  main{width:min(1180px,calc(100% - 12px));padding-block:3px}
+  header{margin-bottom:3px}.brand>span,.settings-button{width:36px;height:36px}.brand strong{font-size:16px}.stat{padding-block:3px}
+  .game-card{display:grid;flex:1 1 auto;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;gap:5px 12px;padding:7px 10px}
+  .game-head{grid-column:1;grid-row:1}.game-head h1{font-size:21px}.listen{width:40px;height:40px;padding:0;justify-content:center;font-size:0}.listen svg{width:21px}
+  .staff{grid-column:1;grid-row:2;min-height:0;max-height:none;height:100%;margin:0;--staff-half-step:13px;--staff-height:104px;--staff-top:calc((100% - var(--staff-height))/2);--neutral-hidden-y:50%}
+  .feedback{grid-column:1;grid-row:3;min-height:36px;margin:0}
+  .piano{grid-column:2;grid-row:1 / 3;height:100%;min-height:0}.actions{grid-column:2;grid-row:3;margin:0}
+  footer{margin-top:2px}
+}
+
+@media(max-width:650px) and (max-height:700px){
+  .staff{min-height:220px;height:220px;max-height:220px;--staff-half-step:8.5px;--staff-height:68px}
+}

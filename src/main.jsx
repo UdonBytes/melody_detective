@@ -4,6 +4,7 @@ import { PRACTICE_CONFIG, chooseHidden, chooseMinorForm, getDisplayNoteName, get
 import './styles.css'
 
 const LEVEL_NAMES = { easy: 'Easy', medium: 'Medium', hard: 'Hard', challenge: 'Challenge' }
+const INPUT_DEBOUNCE_MS = 75
 const KEY_SIGNATURES = [
   { id: '4-flats', label: '4 flats', major: 'Ab', minor: 'F' },
   { id: '3-flats', label: '3 flats', major: 'Eb', minor: 'C' },
@@ -111,15 +112,15 @@ function App() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [feedback, setFeedback] = useState(['listen', 'Listen, then play the whole melody'])
   const [score, setScore] = useState(saved.score), [streak, setStreak] = useState(saved.streak)
-  const [settings, setSettings] = useState(false), [flash, setFlash] = useState(null), [playing, setPlaying] = useState(false), [advancing, setAdvancing] = useState(false), [audioReady, setAudioReady] = useState(false)
-  const first = useRef(true), advanceTimer = useRef(), playbackTimer = useRef(), complete = currentIndex >= melody.length
+  const [settings, setSettings] = useState(false), [flash, setFlash] = useState(null), [playing, setPlaying] = useState(false), [audioReady, setAudioReady] = useState(false)
+  const first = useRef(true), flashTimer = useRef(), inputGuardUntil = useRef(0), playbackTimer = useRef(), complete = currentIndex >= melody.length
 
   useEffect(() => localStorage.setItem('melody-progress', JSON.stringify({ score, streak })), [score, streak])
   useEffect(() => localStorage.setItem('melody-labels', labels), [labels])
   useEffect(() => {
     let mounted = true
     prepareAudio().then(() => mounted && setAudioReady(true)).catch(() => mounted && setFeedback(['wrong', 'Piano sounds could not load']))
-    return () => { mounted = false; clearTimeout(advanceTimer.current); clearTimeout(playbackTimer.current) }
+    return () => { mounted = false; clearTimeout(flashTimer.current); clearTimeout(playbackTimer.current) }
   }, [])
 
   async function play(notes = melody) {
@@ -134,11 +135,11 @@ function App() {
     }
   }
   function next(level = difficulty, length = melodyLength, mode = keyMode, root = tonic) {
-    clearTimeout(advanceTimer.current)
+    inputGuardUntil.current = 0
     const form = mode === 'minor' ? chooseMinorForm() : 'harmonic'
     const fresh = makeMelody(level, length, melody, mode, root, form)
     setExerciseMinorForm(form)
-    setMelody(fresh); setHidden(chooseHidden(level, length)); setCompleted([]); setCurrentIndex(0); setAdvancing(false)
+    setMelody(fresh); setHidden(chooseHidden(level, length)); setCompleted([]); setCurrentIndex(0)
     setFeedback(['listen', level === 'challenge' ? `Listen carefully, then play all ${fresh.length} notes` : 'Listen, then play the whole melody'])
   }
   useEffect(() => {
@@ -154,22 +155,26 @@ function App() {
   }, [difficulty, melodyLength, keyMode, selectedSignatureId, tonic])
 
   function answer(note) {
-    if (complete || advancing) return
-    playPitch(note); setFlash(note); setTimeout(() => setFlash(null), 220)
+    const now = performance.now()
+    if (complete || now < inputGuardUntil.current) return
+    inputGuardUntil.current = now + INPUT_DEBOUNCE_MS
+    playPitch(note)
+    setFlash(note)
+    clearTimeout(flashTimer.current)
+    flashTimer.current = setTimeout(() => setFlash(null), 220)
     if (note === melody[currentIndex]) {
       const answeredIndex = currentIndex
       const isLast = answeredIndex === melody.length - 1
       setCompleted(done => [...done, answeredIndex])
-      setAdvancing(true)
+      setCurrentIndex(answeredIndex + 1)
       setFeedback(['correct', isLast ? 'Melody complete!' : 'Nice! Keep going'])
       if (isLast) { setScore(x => x+1); setStreak(x => x+1) }
-      advanceTimer.current = setTimeout(() => {
-        setCurrentIndex(answeredIndex + 1)
-        setAdvancing(false)
-      }, 380)
     } else { setFeedback(['wrong', Math.random() > .5 ? 'Try again — you’re close' : 'Listen once more']); setStreak(0) }
   }
   function reset() { setScore(0); setStreak(0); next(); setFeedback(['listen', 'Fresh start — you’ve got this!']) }
+
+  const exerciseRangeNotes = getExerciseNotes(melodyLength, keyMode, tonic, exerciseMinorForm)
+  const fullRangeNotes = getExerciseNotes(8, keyMode, tonic, exerciseMinorForm)
 
   return <main>
     <header><div className="brand"><span>♪</span><div><strong>Melody Detective</strong><small>Listen · Remember · Play</small></div></div><div className="header-actions"><div className="stat"><span>★</span><div><small>Score</small><strong>{score}</strong></div></div><div className="stat streak"><span>🔥</span><div><small>Streak</small><strong>{streak}</strong></div></div><button className="settings-button" onClick={() => setSettings(true)} aria-label="Open settings">⚙</button></div></header>
@@ -177,11 +182,10 @@ function App() {
       <div className="game-head"><div><p className="eyebrow exercise-key"><span className="key-root">{tonic}</span> <span className="key-mode">{keyMode === 'major' ? 'Major' : 'Minor'}</span></p><h1>Play the melody back</h1></div><button className="listen" onClick={() => play()} disabled={playing || !audioReady}><Sound />{!audioReady ? 'Loading piano…' : playing ? 'Playing…' : 'Play melody'}</button></div>
       <Staff melody={melody} hidden={hidden} completed={completed} currentIndex={currentIndex} labels={labels} />
       <div className={`feedback ${feedback[0]}`} role="status" aria-live="polite"><span>{feedback[0] === 'correct' ? '✓' : feedback[0] === 'wrong' ? '↻' : '♫'}</span>{feedback[1]}</div>
-      <div className="keyboard-head"><div><p className="eyebrow">Your piano</p><h2>Play the highlighted note</h2></div><small>{complete ? 'Melody complete!' : `Note ${currentIndex + 1} of ${melody.length}`}</small></div>
-      <Piano onPress={answer} flash={flash} labels={labels} disabled={complete || advancing || !audioReady} activeNotes={getExerciseNotes(melodyLength, keyMode, tonic, exerciseMinorForm)} visibleNotes={getExerciseNotes(8, keyMode, tonic, exerciseMinorForm)} keyboardPitches={getKeyboardPitches(melodyLength, keyMode, tonic, exerciseMinorForm)} />
-      <div className="actions"><button className="secondary" onClick={() => play()} disabled={playing || !audioReady}><Sound />{audioReady ? 'Play again' : 'Loading…'}</button><button className="primary" onClick={() => next()} disabled={!complete || playing}>Next question <span>→</span></button></div>
+      <Piano onPress={answer} flash={flash} labels={labels} disabled={complete || !audioReady} activeNotes={exerciseRangeNotes} visibleNotes={fullRangeNotes} keyboardPitches={getKeyboardPitches(melodyLength, keyMode, tonic, exerciseMinorForm)} />
+      <div className="actions single-action"><button className="primary" onClick={() => next()} disabled={!complete || playing}>Next question <span>→</span></button></div>
     </section>
-    <footer><button onClick={reset}>Reset progress</button><span>•</span><span>All notes play with the same gentle beat</span></footer>
+    <footer><div className="footer-tools"><button onClick={reset}>Reset progress</button></div><small className="footer-credit">Created by Jane Hong (UdonBytes)</small></footer>
     {settings && <Settings melodyLength={melodyLength} setMelodyLength={setMelodyLength} difficulty={difficulty} setDifficulty={setDifficulty} keyMode={keyMode} setKeyMode={setKeyMode} selectedSignatureId={selectedSignatureId} setSelectedSignatureId={setSelectedSignatureId} labels={labels} setLabels={setLabels} close={() => setSettings(false)} />}
   </main>
 }
